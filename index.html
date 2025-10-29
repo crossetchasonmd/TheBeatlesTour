@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Perceptual Circle Scaling</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<style>
+
+    body {
+    margin:0;
+    padding:0;
+    font-family:
+    sans-serif;
+    }
+
+  h1 {
+   position: absolute;
+    left: 50px;
+    top: 10px;
+    padding: 20px 2%;
+    margin: 0;
+    background: rgba(29, 14, 232, 0.765);
+    border-radius: 6px;
+    color: whitesmoke;
+    font-size: 2em;
+    z-index: 800;
+    }
+
+  #map {
+    position:absolute;
+    top:0;
+    bottom:0;
+    width: 100%;
+    height: 100%;
+   }
+
+   .legend {
+    background: rgba(247, 247, 249, 0.765);
+    color: rgb(35, 3, 241);
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.4em;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+
+  .legend b {
+    display: block;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+  }
+
+  .legend svg {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+</style>
+
+</head>
+<body>
+    <div id='map'></div>
+    <h1>The Beatles North American Tour Attendence, 1964</h1>
+
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+
+
+<script>
+
+var map = L.map('map', {
+  center: [39.5, -95.3],
+  zoom: 5
+});
+
+var Stadia_StamenToner = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.{ext}', {
+  minZoom: 0,
+  maxZoom: 20,
+  attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://www.stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  ext: 'png'
+}).addTo(map);
+
+var minValue = 3682;
+var minRadius = 6;
+
+function calcRadius(val) {
+  return 1.00 * Math.pow(val / minValue, 0.8) * minRadius;
+}
+
+var states = L.geoJson.ajax("assets/map.geojson", {
+  attribution: 'Data: US Census Bureau, Map: MYNAMEGOESHERE',
+  pointToLayer: function (feature, latlng) {
+    return L.circleMarker(latlng, {
+      color: 'black',
+      opacity: 1,
+      weight: 2,
+      fillColor: 'blue',
+      fillOpacity: 0.6,
+      radius: calcRadius(feature.properties.attendence)
+    });
+  }
+}).addTo(map);
+
+// --- SCALE CONTROL ---
+L.control.scale({ position: 'bottomleft' }).addTo(map);
+
+// --- LEGEND CONTROL ---
+var legend = L.control({ position: 'bottomright' });
+
+legend.onAdd = function () {
+  var div = L.DomUtil.create('div', 'info legend'),
+      grades = [5000, 20000],
+      labels = [];
+
+  div.innerHTML += '<b>Attendance</b><br>';
+
+  for (var i = 0; i < grades.length; i++) {
+    var radius = calcRadius(grades[i]);
+    div.innerHTML +=
+      '<svg height="' + (radius * 2 + 5) + '" width="' + (radius * 2 + 60) + '">' +
+      '<circle cx="' + (radius + 10) + '" cy="' + (radius + 10) + '" r="' + radius + '" fill="blue" stroke="black" stroke-width="1" fill-opacity="0.6"></circle>' +
+      '<text x="' + (radius * 2 + 20) + '" y="' + (radius + 15) + '" font-size="14">' + grades[i].toLocaleString() + '</text>' +
+      '</svg><br>';
+  }
+
+  return div;
+};
+
+legend.addTo(map);
+
+
+</script>
+</body>
+</html>
